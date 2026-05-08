@@ -1,14 +1,13 @@
 "use client";
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
 import Menu from "@/components/Menu";
-import About from "@/components/About";
 import Footer from "@/components/Footer";
 import AuthModal from "@/components/AuthModal";
 import BottomNav from "@/components/BottomNav";
 
-export default function LandingPage() {
+export default function MenuPage() {
+  // এই পেজের জন্য আলাদা স্টেট
   const [isBangla, setIsBangla] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -21,15 +20,12 @@ export default function LandingPage() {
         setShowAuthModal={setShowAuthModal} 
       />
       
-      <Hero isBangla={isBangla} />
+      {/* ন্যাভবারটি Fixed থাকায় মেনুটা যেন ন্যাভবারের নিচে ঢুকে না যায়, তাই pt-24 (padding-top) দেওয়া হয়েছে */}
+      <div className="pt-24 min-h-screen">
+        <Menu isBangla={isBangla} />
+      </div>
+
       
-      <Menu isBangla={isBangla} />
-
-      {/* নতুন যোগ করা About সেকশন */}
-      <About isBangla={isBangla} />
-
-      {/* নতুন যোগ করা Footer সেকশন */}
-      <Footer isBangla={isBangla} />
 
       <AuthModal 
         showAuthModal={showAuthModal} 
@@ -43,10 +39,6 @@ export default function LandingPage() {
         setShowAuthModal={setShowAuthModal} 
       />
 
-      <style dangerouslySetInnerHTML={{__html: `
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}} />
     </main>
   );
 }
