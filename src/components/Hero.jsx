@@ -1,126 +1,126 @@
+"use client";
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import { motion } from "framer-motion";
-import { ShoppingBag, ArrowRight, Star, Flame } from "lucide-react";
+import { Playfair_Display, Great_Vibes } from "next/font/google";
 
-export default function Hero({ isBangla }) {
+// --- Premium Fonts Initialization ---
+const playfair = Playfair_Display({ 
+  subsets: ["latin"], 
+  weight: ["400", "600", "700"], 
+  style: ["normal", "italic"] 
+});
+
+const greatVibes = Great_Vibes({ 
+  subsets: ["latin"], 
+  weight: ["400"] 
+});
+
+export default function Hero() {
+  // Graceful & Slow Animations for Premium Feel
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.2, delayChildren: 0.2 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+        opacity: 1, 
+        y: 0, 
+        transition: { duration: 0.8, ease: [0.2, 0.65, 0.3, 0.9] } 
+    }
+  };
+
   return (
-    <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-4 md:px-20 pt-20 overflow-hidden">
-      
-      {/* Background Image with Dark Gradient Overlay */}
-      <div 
-        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transform scale-105"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?q=80&w=2000&auto=format&fit=crop')" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-[#080808]/90 via-[#080808]/60 to-[#080808]"></div>
+    <section className="relative w-full min-h-screen bg-[#030303] flex items-center pt-28 pb-10 overflow-hidden px-6 md:px-12 lg:px-24">
         
-        {/* Radial Glow Effect for extra attractiveness */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(227,27,35,0.15)_0%,transparent_60%)] pointer-events-none"></div>
-      </div>
-      
-      {/* Floating Animated Stats Card (Left) */}
-      <motion.div 
-        animate={{ y: [0, -15, 0] }}
-        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-        className="absolute left-10 lg:left-20 top-1/3 hidden md:flex items-center gap-3 px-6 py-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl z-20 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
-      >
-        <div className="bg-yellow-500/20 p-2 rounded-full">
-          <Star size={24} className="text-yellow-500 fill-yellow-500" />
-        </div>
-        <div className="text-left">
-          <p className="text-white font-bold text-lg">4.9/5</p>
-          <p className="text-[#A0A0A0] text-xs uppercase tracking-wider">{isBangla ? "ইউজার রেটিং" : "User Rating"}</p>
-        </div>
-      </motion.div>
+        {/* Soft Luxury Red Glow */}
+        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[700px] h-[700px] bg-[#E31B23]/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
 
-      {/* Floating Animated Trending Card (Right) */}
-      <motion.div 
-        animate={{ y: [0, 15, 0] }}
-        transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-        className="absolute right-10 lg:right-20 bottom-1/3 hidden md:flex items-center gap-4 px-5 py-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl z-20 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
-      >
-        <div className="bg-[#E31B23]/20 p-3 rounded-full">
-          <Flame size={24} className="text-[#E31B23]" />
+        <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-[1920px] mx-auto gap-12 relative z-10">
+            
+            {/* --- LEFT CONTENT (Luxury Typography) --- */}
+            <div className="w-full md:w-1/2 flex flex-col pt-10 md:pt-0 z-20">
+                
+                <motion.div 
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="flex flex-col"
+                >
+                    {/* Small Pechano (Cursive) Premium Text */}
+                    <motion.div variants={itemVariants} className="mb-4">
+                        <h3 className={`${greatVibes.className} text-[#E31B23] text-4xl md:text-5xl font-normal tracking-wide drop-shadow-md`}>
+                            Dhaka's finest
+                        </h3>
+                    </motion.div>
+                    
+                    {/* MASSIVE LUXURY ITALIC HEADLINE */}
+                    <div className="flex flex-col mb-8">
+                        <motion.h1 variants={itemVariants} className={`${playfair.className} text-6xl sm:text-7xl md:text-[90px] lg:text-[110px] text-white leading-[1.1] tracking-tight italic font-semibold`}>
+                            Crave the
+                        </motion.h1>
+                        <motion.h1 variants={itemVariants} className={`${playfair.className} text-6xl sm:text-7xl md:text-[90px] lg:text-[110px] text-[#E31B23] leading-[1.1] tracking-tight italic font-bold drop-shadow-[0_0_15px_rgba(227,27,35,0.4)]`}>
+                            Spice.
+                        </motion.h1>
+                    </div>
+
+                    {/* Elegant Thin Separator */}
+                    <motion.div variants={itemVariants} className="w-24 h-[2px] bg-gradient-to-r from-[#E31B23] to-transparent mb-8"></motion.div>
+                    
+                    {/* SUB-HEADLINE (Clean & Elegant) */}
+                    <motion.h2 variants={itemVariants} className="text-lg md:text-xl font-light tracking-[0.2em] uppercase mb-4 text-white/90">
+                        <span className="font-bold text-[#E31B23]">Spiciest</span> Crab Experience
+                    </motion.h2>
+
+                    {/* PARAGRAPH */}
+                    <motion.p variants={itemVariants} className="text-[#a0a0a0] text-base md:text-lg font-light mb-12 max-w-md leading-relaxed tracking-wide">
+                        Bold flavors meets fresh ingredients. <br />
+                        Crafted for late nights and unforgettable moments.
+                    </motion.p>
+
+                    {/* PREMIUM BUTTON (Minimalist Outline) */}
+                    <motion.div variants={itemVariants}>
+                        <button className="relative group px-10 py-4 rounded-full border border-[#E31B23]/50 text-white font-light tracking-[0.15em] uppercase overflow-hidden hover:border-[#E31B23] hover:shadow-[0_0_30px_rgba(227,27,35,0.2)] transition-all duration-500 bg-[#E31B23]/5 backdrop-blur-sm">
+                            {/* Smooth Hover Fill */}
+                            <div className="absolute inset-0 bg-[#E31B23] translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 ease-in-out z-0"></div>
+                            
+                            <span className="relative z-10 flex items-center gap-4">
+                                Explore The Menu
+                                <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform duration-300" />
+                            </span>
+                        </button>
+                    </motion.div>
+                </motion.div>
+            </div>
+
+            {/* --- RIGHT CONTENT (Floating Image Area) --- */}
+            <div className="w-full md:w-1/2 relative h-[450px] md:h-[600px] lg:h-[700px] flex justify-center items-center">
+                
+                {/* Slow, Elegant Float Animation */}
+                <motion.div
+                    animate={{ y: [0, -15, 0], rotate: [0, 1, -1, 0] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                    className="relative w-full h-full"
+                >
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] h-[65%] bg-[#E31B23]/15 blur-[90px] rounded-full z-0"></div>
+                    
+                    <Image 
+                        src="https://i.postimg.cc/rsCj9RBK/1daa2d1d-d2a7-49a7-942c-54c7967f7630.jpg" 
+                        alt="Premium Spicy Crab"
+                        fill
+                        className="object-contain relative z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)]"
+                        priority
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                </motion.div>
+            </div>
+
         </div>
-        <div className="text-left">
-          <p className="text-[#A0A0A0] text-xs uppercase tracking-wider mb-0.5">{isBangla ? "ট্রেন্ডিং" : "Trending Now"}</p>
-          <p className="text-white font-bold text-sm">Spicy Garlic Crab</p>
-        </div>
-      </motion.div>
-
-      {/* Main Content */}
-      <div className="max-w-5xl z-10 flex flex-col items-center mt-10">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 10 }}
-          className="px-6 py-2 mb-8 rounded-full border border-[#E31B23]/30 bg-[#E31B23]/10 backdrop-blur-md inline-flex items-center gap-2"
-        >
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E31B23] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-[#E31B23]"></span>
-          </span>
-          <span className="text-[#E31B23] text-sm font-bold tracking-widest uppercase">
-            {isBangla ? "১০০% তাজা সি-ফুড" : "100% Fresh Catch"}
-          </span>
-        </motion.div>
-
-        <motion.h1 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.8, ease: "easeOut" }}
-          className="text-6xl md:text-8xl lg:text-[100px] font-extrabold leading-[1.1] tracking-tighter mb-6 text-white"
-          style={{ textShadow: '0 20px 40px rgba(0,0,0,0.9)' }}
-        >
-          {isBangla ? "স্বাদে" : "CRAVE"}<br/>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E31B23] via-[#ff4d54] to-[#E31B23] animate-gradient-x">
-            {isBangla ? "আগুন" : "THE SPICE."}
-          </span>
-        </motion.h1>
-        
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="text-lg md:text-2xl text-gray-300 mb-12 max-w-3xl font-light leading-relaxed"
-        >
-          {isBangla 
-            ? "শহরের সেরা এবং সবচেয়ে স্পাইসি কাঁকড়া এখন আপনার দোরগোড়ায়। একটি প্রিমিয়াম সি-ফুড এক্সপেরিয়েন্সের জন্য প্রস্তুত হোন।" 
-            : "The city's finest and spiciest crabs, cooked to absolute perfection. Prepare your tastebuds for a premium seafood experience."}
-        </motion.p>
-
-        {/* Dual Call to Action Buttons */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto"
-        >
-          <button className="group relative px-8 py-4 md:px-10 md:py-5 bg-[#E31B23] text-white font-bold text-lg md:text-xl rounded-2xl transition-all overflow-hidden shadow-[0_0_30px_rgba(227,27,35,0.4)] hover:shadow-[0_0_50px_rgba(227,27,35,0.6)] transform hover:-translate-y-1">
-            <span className="relative z-10 flex items-center justify-center gap-3">
-              <ShoppingBag size={22} className="group-hover:-rotate-12 transition-transform" />
-              {isBangla ? "অর্ডার করুন" : "Order Now"} 
-            </span>
-          </button>
-          
-          <button className="group relative px-8 py-4 md:px-10 md:py-5 bg-white/5 backdrop-blur-md border border-white/10 text-white font-bold text-lg md:text-xl rounded-2xl transition-all hover:bg-white/10 hover:border-white/20 transform hover:-translate-y-1">
-            <span className="relative z-10 flex items-center justify-center gap-3">
-              {isBangla ? "মেনু দেখুন" : "Explore Menu"} 
-              <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
-            </span>
-          </button>
-        </motion.div>
-      </div>
-      
-      {/* Custom Keyframes for Gradient Animation */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes gradient-x {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        .animate-gradient-x {
-          background-size: 200% 200%;
-          animation: gradient-x 3s ease infinite;
-        }
-      `}} />
     </section>
   );
 }

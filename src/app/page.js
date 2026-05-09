@@ -7,6 +7,7 @@ import About from "@/components/About";
 import Footer from "@/components/Footer";
 import AuthModal from "@/components/AuthModal";
 import BottomNav from "@/components/BottomNav";
+import TheLab from "@/components/TheLab";
 
 export default function LandingPage() {
   const [isBangla, setIsBangla] = useState(false);
@@ -22,7 +23,7 @@ export default function LandingPage() {
       />
       
       <Hero isBangla={isBangla} />
-      
+      <TheLab></TheLab>
       <Menu isBangla={isBangla} />
 
       {/* নতুন যোগ করা About সেকশন */}

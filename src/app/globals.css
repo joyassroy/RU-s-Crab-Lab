@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+/* Custom Brush Stroke for Headings */
+.red-brush-stroke {
+  position: relative;
+  display: inline-block;
+}
+
+.red-brush-stroke::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -4px; /* Adjust as needed */
+  width: 100%;
+  height: 4px; /* Adjust as needed */
+  background: gradient(to right, #E31B23, #ff4b52, transparent);
+  border-radius: 9999px;
+  transform: skew-x(-45deg);
+  z-index: -1;
+  opacity: 0.8;
+}
+
+/* For larger screens */
+@media (min-width: 768px) {
+  .red-brush-stroke::after {
+    height: 6px; /* Adjust as needed */
+    bottom: -6px; /* Adjust as needed */
+  }
+}
 @theme {
   /* Dynamic Theme Colors */
   --color-background: #080808;

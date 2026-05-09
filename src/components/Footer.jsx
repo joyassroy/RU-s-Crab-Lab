@@ -11,8 +11,8 @@ export default function Footer({ isBangla }) {
           {/* Brand Info */}
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <div className="text-3xl font-extrabold tracking-wider mb-4">
-              <span className="text-white">CRAB</span>
-              <span className="text-[#E31B23]">BITES</span>
+              <span className="text-white">RU's </span>
+              <span className="text-[#E31B23]">Crab Lab</span>
             </div>
             <p className="text-[#A0A0A0] max-w-xs">
               {isBangla 

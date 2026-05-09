@@ -1,208 +1,242 @@
-import { useState } from "react";
-import useSWR from "swr";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Loader2, Star, Flame, Info } from "lucide-react";
+"use client";
+import { useState, useEffect } from "react";
+import { Plus, ArrowRight, ArrowLeft, Flame, Droplets, Zap, Loader2 } from "lucide-react";
 import Image from "next/image";
-import ProductModal from "./ProductModal"; 
+import { motion, AnimatePresence } from "framer-motion";
+import { Playfair_Display, Anton } from "next/font/google";
 
-// --- Mock Database with detailed Info & BDT Price ---
-const mockDatabaseItems = [
-  { _id: "1", name: "Premium Garlic Crab", nameBn: "প্রিমিয়াম গার্লিক কাঁকড়া", category: "Crabs", priceBDT: 1799, img: "/crab-1.jpeg", rating: 4.8, description: "গাজীপুরের সবচেয়ে বড় সাইজের তাজা কাঁকড়া, আমাদের সিক্রেট গার্লিক ও বাটার সসে রান্না করা। স্পাইসি লেভেল মিডিয়াম। ২ জনের জন্য পর্যাপ্ত।", descriptionEn: "Jumbo sized fresh crabs cooked in our secret garlic butter sauce. Medium spicy. Served for two." },
-  { _id: "2", name: "Fiery Chili Crab", nameBn: "ফায়ারি চিলি কাঁকড়া", category: "Crabs", priceBDT: 1999, img: "/crab-2.jpeg", rating: 4.9, description: "ঝাল যারা পছন্দ করেন তাদের জন্য স্পেশাল। সিঙ্গাপুরি স্টাইলের ফায়ারি চিলি সসে রান্না করা বড় কাঁকড়া। এক প্লেটে ৪টি বড় পিস।", descriptionEn: "Special for spice lovers. Large crabs cooked in Singaporean style fiery chili sauce. 4 large pieces per plate." },
-  { _id: "3", name: "Ocean Feast Platter", nameBn: "ওশান ফিস্ট প্লাটার", category: "Combos", priceBDT: 3499, img: "/combos-1.jpeg", rating: 4.7, description: "পুরো সি-ফুড প্লাটার: স্পাইসি কাঁকড়া, ভাজা স্কুইড rings, প্রন এবং বাটার রাইস। ৩-৪ জনের জন্য উপযুক্ত।", descriptionEn: "Complete Seafood Platter: Spicy Crab, Fried Squid Rings, Prawns & Butter Rice. Serves 3-4." },
-  { _id: "4", name: "Crab King Burger", nameBn: "ক্র্যাব কিং বার্গার", category: "Burgers", priceBDT: 899, img: "/burger-1.jpeg", rating: 4.6, description: "কাঁকড়ার তাজা কিমা দিয়ে তৈরি শাহী প্যাটি, সাথে চিজ, লটুস এবং আমাদের স্পেশাল সস। গাজীপুরের সেরা বার্গার।", descriptionEn: "Juicy Patty made with fresh crab meat, cheese, lettuce & special sauce. Gazaipur's best burger." },
-];
-
-const categories = ["All", "Crabs", "Combos", "Burgers"];
-
-// --- Helper function to format BDT in Bangla ---
-const formatPrice = (price, isBangla) => {
-  if (isBangla) {
-    return price.toLocaleString('bn-BD') + ' ৳';
-  }
-  return 'Tk ' + price.toLocaleString('en-US');
-};
-
-// --- SWR Fetcher function ---
-const fetcher = async () => {
-  await new Promise(resolve => setTimeout(resolve, 800)); 
-  return mockDatabaseItems;
-};
-
-// --- Framer Motion Animations Definitions ---
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 } 
-  }
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 30, scale: 0.95 },
-  visible: { 
-    opacity: 1, y: 0, scale: 1,
-    transition: { type: "spring", stiffness: 100, damping: 15 }
-  }
-};
+// --- Premium Fonts ---
+const playfair = Playfair_Display({ subsets: ["latin"], weight: ["700", "900"], style: ["italic"] });
+const anton = Anton({ subsets: ["latin"], weight: ["400"] });
 
 export default function Menu({ isBangla }) {
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [selectedProduct, setSelectedProduct] = useState(null); 
-  
-  // --- SWR Implementation ---
-  const { data: menuItems, error, isLoading } = useSWR('api/menu', fetcher, {
-    revalidateOnFocus: false, 
-    dedupingInterval: 60000 
-  });
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  if (error) return <div className="text-center text-[#E31B23] py-20">Error loading menu.</div>;
+  // --- ডাটাবেস ফেচ ---
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/menu'); 
+        if (!res.ok) throw new Error("Failed to fetch");
+        
+        const data = await res.json();
+        if (data && data.length > 0) {
+            setMenuItems(data);
+        }
+      } catch (error) {
+        console.error("Failed to load menu items:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
-  const filteredItems = menuItems
-    ? activeCategory === "All" 
-      ? menuItems 
-      : menuItems.filter(item => item.category === activeCategory)
-    : [];
+  // --- Auto Slider ---
+  useEffect(() => {
+    if (menuItems.length <= 1) return;
+    const slideInterval = setInterval(() => {
+      setCurrentIndex((prev) => (prev === menuItems.length - 1 ? 0 : prev + 1));
+    }, 4000); // ৩ সেকেন্ড থেকে বাড়িয়ে ৪ সেকেন্ড করলাম যাতে ইউজার পড়ার সময় পায়
+    return () => clearInterval(slideInterval);
+  }, [menuItems.length]);
+
+  const handleNext = () => setCurrentIndex((prev) => (prev === menuItems.length - 1 ? 0 : prev + 1));
+  const handlePrev = () => setCurrentIndex((prev) => (prev === 0 ? menuItems.length - 1 : prev - 1));
+
+  if (loading) {
+      return (
+          <div className="h-screen bg-[#050505] flex flex-col items-center justify-center gap-6">
+              <div className="relative p-4 rounded-full bg-[#E31B23]/10">
+                <Loader2 className="text-[#E31B23] animate-spin" size={48} />
+              </div>
+              <p className="text-white font-bold tracking-[0.2em] uppercase animate-pulse">Loading The Lab...</p>
+          </div>
+      );
+  }
+
+  const currentItem = menuItems[currentIndex];
+  const nameParts = currentItem?.name.split(" ") || ["", ""];
+  const titleWhite = nameParts[0];
+  const titleRed = nameParts.slice(1).join(" ") || "";
+
+  const getTagline = (category) => {
+      if(category === "Crabs") return "CRUNCHY. SPICY. ADDICTIVE.";
+      if(category === "Dips") return "RICH. CREAMY. SAVORY.";
+      return "BOLD. PREMIUM. EXCLUSIVE.";
+  };
+
+  const flavors = [
+    { name: "SPICY", icon: Flame },
+    { name: "FRESH", icon: Droplets },
+    { name: "BOLD", icon: Zap },
+  ];
 
   return (
-    <section id="menu" className="px-4 md:px-20 py-24 relative z-10 bg-[#080808]">
-      
-      {/* Background radial glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(circle_at_center,rgba(227,27,35,0.08)_0%,transparent_65%)] pointer-events-none"></div>
-
-      <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-6 relative z-10">
-        <h2 className="text-4xl md:text-6xl font-extrabold text-white tracking-tighter">
-          {isBangla ? "আমাদের মেনু" : "Explore Menu"}
-        </h2>
+    <section className="relative w-full min-h-screen bg-[#050505] pt-24 md:pt-40 pb-16 overflow-hidden flex lg:items-center">
         
-        {/* Category Tabs */}
-        <div className="flex overflow-x-auto w-full md:w-auto pb-4 md:pb-0 gap-3 hide-scrollbar rounded-full p-2 bg-white/5 border border-white/5 backdrop-blur-md">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-6 py-3 rounded-full whitespace-nowrap transition-all duration-300 font-bold text-sm ${
-                activeCategory === cat 
-                  ? "bg-[#E31B23] text-white font-medium shadow-[0_0_20px_rgba(227,27,35,0.5)] scale-105" 
-                  : "text-[#A0A0A0] hover:text-white hover:bg-white/5"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* Background Subtle Smoke/Glow Effect */}
+        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[600px] h-[600px] bg-[#E31B23]/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
 
-      {/* Loading State */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 min-h-[400px]">
-          <Loader2 size={50} className="text-[#E31B23] animate-spin mb-4 opacity-70" />
-          <p className="text-[#A0A0A0] font-bold text-lg animate-pulse">
-            {isBangla ? "তাজা সি-ফুড লোড হচ্ছে..." : "Loading fresh catch..."}
-          </p>
-        </div>
-      ) : (
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10"
-        >
-          <AnimatePresence>
-            {filteredItems.length > 0 ? (
-              filteredItems.map((item) => (
-                <motion.div
-                  layout
-                  variants={cardVariants}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  whileHover={{ y: -8, boxShadow: "0 20px 40px rgba(227,27,35,0.15)" }}
-                  key={item._id}
-                  className="bg-[#111111] border border-white/5 p-5 rounded-[32px] group hover:border-[#E31B23]/40 transition-all duration-500 relative overflow-hidden flex flex-col h-full shadow-lg"
-                >
-                  
-                  {/* Image Container */}
-                  <div className="w-full h-60 rounded-2xl overflow-hidden mb-6 relative flex-shrink-0 cursor-pointer" onClick={() => setSelectedProduct(item)}>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10 pointer-events-none transition-opacity duration-300 group-hover:opacity-100"></div>
+        <div className="max-w-[1920px] mx-auto px-6 md:px-12 lg:px-24 w-full relative z-10">
+            
+            {/* --- Desktop: Grid 2-Column Layout --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-10 lg:gap-20">
+                
+                {/* --- LEFT COLUMN: TEXT (Desktop: 5 Columns) --- */}
+                <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left order-2 lg:order-1">
                     
-                    <Image 
-                      src={item.img} 
-                      alt={item.name} 
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    />
-                    
-                    {/* Rating Badge */}
-                    <div className="absolute top-3 right-3 z-20 flex items-center gap-1 px-3 py-1 bg-black/70 backdrop-blur-sm rounded-full border border-yellow-500/30">
-                      <Star size={14} className="text-yellow-500 fill-yellow-500" />
-                      <span className="text-white font-bold text-xs">{item.rating}</span>
+                    {/* Item Number */}
+                    <motion.h3 
+                        key={`id-${currentIndex}`}
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                        className={`${playfair.className} text-[#E31B23] text-3xl lg:text-5xl font-black italic mb-2`}
+                    >
+                        {currentIndex < 9 ? `0${currentIndex + 1}` : currentIndex + 1}.
+                    </motion.h3>
+
+                    {/* Massive Title Stack */}
+                    <motion.div 
+                        key={`title-${currentIndex}`}
+                        initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="flex flex-col mb-6 lg:mb-10"
+                    >
+                        <h1 className={`${anton.className} text-5xl sm:text-7xl lg:text-[110px] text-white uppercase leading-[0.85] tracking-wide`}>
+                            {titleWhite}
+                        </h1>
+                        <h1 className={`${anton.className} text-5xl sm:text-7xl lg:text-[110px] text-[#E31B23] uppercase leading-[0.85] tracking-wide transform lg:-rotate-2 -mt-1 lg:-mt-4 drop-shadow-[0_0_20px_rgba(227,27,35,0.4)]`}>
+                            {titleRed}
+                        </h1>
+                    </motion.div>
+
+                    {/* Tagline Box */}
+                    <motion.div 
+                        key={`tagline-${currentIndex}`}
+                        initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                        className="bg-[#E31B23] px-6 py-2 transform -skew-x-12 rounded-sm shadow-[0_5px_15px_rgba(227,27,35,0.4)] mb-8 lg:mb-12"
+                    >
+                        <p className="transform skew-x-12 text-[#050505] font-black tracking-widest text-xs lg:text-base uppercase">
+                            {getTagline(currentItem?.category)}
+                        </p>
+                    </motion.div>
+
+                    {/* Description */}
+                    <motion.p 
+                        key={`desc-${currentIndex}`}
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        className="text-white/80 text-lg lg:text-xl font-medium max-w-md leading-relaxed mb-10 lg:mb-14"
+                    >
+                        {isBangla ? currentItem?.descriptionBn : currentItem?.description}
+                    </motion.p>
+
+                    {/* Flavor Profile */}
+                    <div className="flex items-center gap-8 lg:gap-12 mb-10 lg:mb-14">
+                        {flavors.map((flavor, idx) => (
+                            <div key={idx} className="flex flex-col items-center gap-3">
+                                <flavor.icon className="text-[#E31B23] w-6 h-6 lg:w-8 lg:h-8" strokeWidth={1.5} />
+                                <span className="text-white text-[10px] lg:text-xs font-bold tracking-widest uppercase">{flavor.name}</span>
+                            </div>
+                        ))}
                     </div>
 
-                    {/* Details Info Icon */}
-                    <div className="absolute inset-0 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="p-4 bg-white/10 backdrop-blur-sm rounded-full border border-white/20">
-                            <Info size={24} className="text-white" />
+                    {/* Price & Action */}
+                    <div className="flex flex-col sm:flex-row items-center gap-8 lg:gap-12 w-full lg:w-auto">
+                        <h2 className="text-[#E31B23] text-4xl lg:text-6xl font-bold font-sans">
+                            Tk {currentItem?.priceBDT}
+                        </h2>
+
+                        <button 
+                            onClick={() => setSelectedProduct(currentItem)}
+                            className="group flex items-center justify-between gap-6 bg-[#E31B23] hover:bg-[#c9161e] text-white px-8 py-3.5 rounded-full transition-all duration-300 shadow-[0_10px_30px_rgba(227,27,35,0.3)] active:scale-95 w-full sm:w-auto"
+                        >
+                            <span className="font-bold tracking-widest uppercase text-sm lg:text-base">Add To Tray</span>
+                            <div className="bg-[#050505] p-2 rounded-full group-hover:rotate-90 transition-transform">
+                                <Plus size={20} className="text-white" />
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                {/* --- RIGHT COLUMN: IMAGE & NAV (Desktop: 7 Columns) --- */}
+                <div className="lg:col-span-7 relative flex justify-center items-center h-[40vh] lg:h-[700px] order-1 lg:order-2">
+                    
+                    {/* Main Food Image */}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={`img-${currentIndex}`}
+                            initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.6 }}
+                            className="relative w-full h-full"
+                        >
+                            <Image 
+                                src={currentItem?.img} alt={currentItem?.name}
+                                fill className="object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] z-10"
+                                priority
+                            />
+                        </motion.div>
+                    </AnimatePresence>
+
+                    {/* --- DESKTOP NAVIGATION (Fixed Bottom-Right) --- */}
+                    <div className="hidden lg:flex absolute bottom-0 right-0 z-30 flex-row items-center gap-8">
+                        
+                        {/* Prev Button */}
+                        <div className="flex flex-col items-center gap-3 cursor-pointer group" onClick={handlePrev}>
+                            <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center bg-[#050505]/80 backdrop-blur-md group-hover:border-[#E31B23] transition-all">
+                                <ArrowLeft size={30} className="text-white/60 group-hover:text-[#E31B23] group-hover:-translate-x-1.5 transition-all" />
+                            </div>
+                            <span className="text-white/40 text-[10px] font-bold tracking-[0.3em] uppercase group-hover:text-[#E31B23] transition-colors">Prev</span>
+                        </div>
+
+                        {/* Next Button */}
+                        <div className="flex flex-col items-center gap-3 cursor-pointer group" onClick={handleNext}>
+                            <div className="w-16 h-16 rounded-full border border-[#E31B23]/70 flex items-center justify-center bg-[#050505]/90 backdrop-blur-md group-hover:bg-[#E31B23] transition-all">
+                                <ArrowRight size={30} className="text-white group-hover:translate-x-1.5 transition-transform" />
+                            </div>
+                            <span className="text-white/80 text-[10px] font-bold tracking-[0.3em] uppercase group-hover:text-white transition-colors">Next Item</span>
                         </div>
                     </div>
-                  </div>
 
-                  {/* Text Content */}
-                  <div className="px-1 flex flex-col flex-grow">
-                    <div className="flex justify-between items-center mb-1.5">
-                        <h3 className="text-2xl font-bold mb-1 text-white tracking-tight group-hover:text-[#E31B23] transition-colors cursor-pointer" onClick={() => setSelectedProduct(item)}>
-                            {isBangla ? item.nameBn : item.name}
-                        </h3>
+                    {/* Mobile Only Navigation (Float on Image) */}
+                    <div className="lg:hidden absolute inset-0 z-20 flex items-center justify-between px-2 pointer-events-none">
+                        <button onClick={handlePrev} className="pointer-events-auto w-10 h-10 rounded-full bg-[#050505]/60 border border-white/10 flex items-center justify-center">
+                            <ArrowLeft size={20} className="text-white" />
+                        </button>
+                        <button onClick={handleNext} className="pointer-events-auto w-10 h-10 rounded-full bg-[#E31B23]/80 flex items-center justify-center">
+                            <ArrowRight size={20} className="text-white" />
+                        </button>
                     </div>
-                    
-                    <p className="text-[#A0A0A0] text-sm mb-6 flex-grow leading-relaxed line-clamp-2">
-                        {isBangla ? item.description : item.descriptionEn}
-                    </p>
+                </div>
+            </div>
+        </div>
 
-                    <div className="flex justify-between items-center mt-auto pt-3 border-t border-white/5">
-                      <div className="flex flex-col">
-                        <span className="text-sm text-[#A0A0A0] font-medium tracking-wide">
-                            {isBangla ? "মূল্য" : "Price"}
-                        </span>
-                        <span className="text-3xl font-extrabold text-[#E31B23]">
-                            {formatPrice(item.priceBDT, isBangla)}
-                        </span>
-                      </div>
-                      
-                      {/* Plus Button Updated Here */}
-                      <button 
-                        onClick={() => setSelectedProduct(item)} // এখানে ক্লিক ইভেন্ট অ্যাড করা হয়েছে
-                        className="p-4 bg-[#E31B23]/10 hover:bg-[#E31B23] rounded-3xl border border-[#E31B23]/30 hover:border-[#E31B23] transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(227,27,35,0.4)]"
-                      >
-                        <Plus size={24} className="text-white group-hover:scale-110" />
+        {/* --- Premium Modal --- */}
+        <AnimatePresence>
+          {selectedProduct && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+                  <motion.div 
+                      initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                      className="bg-[#0a0a0a] border border-[#E31B23]/30 p-8 rounded-[40px] w-full max-w-md relative flex flex-col items-center text-center"
+                  >
+                      <button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 text-white/50 hover:text-[#E31B23] transition-colors">
+                          <Plus size={32} className="rotate-45" />
                       </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="col-span-full text-center py-20 flex flex-col items-center gap-4 bg-white/5 rounded-3xl border border-white/5"
-              >
-                <Flame size={40} className="text-gray-600" />
-                <p className="text-[#A0A0A0] text-lg font-bold">
-                  {isBangla ? "এই ক্যাটাগরিতে কোনো আইটেম পাওয়া যায়নি।" : "No items found in this category."}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      )}
-
-      {/* --- Product Detail Modal --- */}
-      <ProductModal 
-        product={selectedProduct} 
-        onClose={() => setSelectedProduct(null)} 
-        isBangla={isBangla} 
-        formatPrice={formatPrice}
-      />
-
+                      <div className="relative w-40 h-40 mb-6 rounded-full overflow-hidden border-2 border-[#E31B23]">
+                          <Image src={selectedProduct.img} alt={selectedProduct.name} fill className="object-cover" />
+                      </div>
+                      <h2 className={`${anton.className} text-4xl text-white mb-2 uppercase tracking-tight`}>
+                        {selectedProduct.name.split(" ")[0]} <span className="text-[#E31B23]">{selectedProduct.name.split(" ").slice(1).join(" ")}</span>
+                      </h2>
+                      <h3 className="text-[#E31B23] text-2xl font-bold mb-6 font-sans">Tk {selectedProduct.priceBDT}</h3>
+                      <p className="text-white/60 mb-10 text-lg leading-relaxed">{isBangla ? selectedProduct.descriptionBn : selectedProduct.description}</p>
+                      <button onClick={() => setSelectedProduct(null)} className="w-full bg-[#E31B23] py-4 rounded-full font-bold uppercase tracking-widest hover:bg-[#b31219] transition-all">Confirm Add To Tray</button>
+                  </motion.div>
+              </div>
+          )}
+        </AnimatePresence>
     </section>
   );
 }
