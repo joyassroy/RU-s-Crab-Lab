@@ -84,19 +84,19 @@ export default function Hero() {
                     </motion.p>
 
                     {/* PREMIUM BUTTON (Minimalist Outline) */}
-                    <motion.div variants={itemVariants}>
+                     {/* <motion.div variants={itemVariants}>
                         <button className="relative group px-10 py-4 rounded-full border border-[#E31B23]/50 text-white font-light tracking-[0.15em] uppercase overflow-hidden hover:border-[#E31B23] hover:shadow-[0_0_30px_rgba(227,27,35,0.2)] transition-all duration-500 bg-[#E31B23]/5 backdrop-blur-sm">
-                            {/* Smooth Hover Fill */}
-                            <div className="absolute inset-0 bg-[#E31B23] translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 ease-in-out z-0"></div>
                             
-                            <span className="relative z-10 flex items-center gap-4">
+                            <div className="absolute inset-0 bg-[#E31B23] translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 ease-in-out z-0"></div> 
+                            
+                           <span className="relative z-10 flex items-center gap-4">
                                 Explore The Menu
                                 <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform duration-300" />
-                            </span>
+                            </span> 
                         </button>
-                    </motion.div>
-                </motion.div>
-            </div>
+                    </motion.div>  */}
+               </motion.div> 
+             </div>
 
             {/* --- RIGHT CONTENT (Floating Image Area) --- */}
             <div className="w-full md:w-1/2 relative h-[450px] md:h-[600px] lg:h-[700px] flex justify-center items-center">

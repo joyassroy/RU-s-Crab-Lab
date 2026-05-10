@@ -14,6 +14,7 @@ export default function Menu({ isBangla }) {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isPaused, setIsPaused] = useState(false); // স্লাইডার পজ করার জন্য নতুন স্টেট
 
   // --- ডাটাবেস ফেচ ---
   useEffect(() => {
@@ -35,14 +36,17 @@ export default function Menu({ isBangla }) {
     fetchProducts();
   }, []);
 
-  // --- Auto Slider ---
+  // --- Auto Slider (with Pause Functionality) ---
   useEffect(() => {
-    if (menuItems.length <= 1) return;
+    // যদি আইটেম ১টার কম থাকে অথবা ইউজার হোল্ড করে রাখে (isPaused), তাহলে স্লাইড হবে না
+    if (menuItems.length <= 1 || isPaused) return; 
+    
     const slideInterval = setInterval(() => {
       setCurrentIndex((prev) => (prev === menuItems.length - 1 ? 0 : prev + 1));
-    }, 4000); // ৩ সেকেন্ড থেকে বাড়িয়ে ৪ সেকেন্ড করলাম যাতে ইউজার পড়ার সময় পায়
+    }, 4000); 
+    
     return () => clearInterval(slideInterval);
-  }, [menuItems.length]);
+  }, [menuItems.length, isPaused]); // isPaused চেঞ্জ হলেও এফেক্ট রান করবে
 
   const handleNext = () => setCurrentIndex((prev) => (prev === menuItems.length - 1 ? 0 : prev + 1));
   const handlePrev = () => setCurrentIndex((prev) => (prev === 0 ? menuItems.length - 1 : prev - 1));
@@ -81,7 +85,17 @@ export default function Menu({ isBangla }) {
         {/* Background Subtle Smoke/Glow Effect */}
         <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[600px] h-[600px] bg-[#E31B23]/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
 
-        <div className="max-w-[1920px] mx-auto px-6 md:px-12 lg:px-24 w-full relative z-10">
+        {/* Desktop: onMouseEnter, onMouseLeave 
+            Mobile: onTouchStart, onTouchEnd 
+            এই ইভেন্টগুলোর মাধ্যমে ইউজার টাচ করলে বা হোভার করলে স্লাইডার থেমে যাবে।
+        */}
+        <div 
+            className="max-w-[1920px] mx-auto px-6 md:px-12 lg:px-24 w-full relative z-10"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setIsPaused(false)}
+        >
             
             {/* --- Desktop: Grid 2-Column Layout --- */}
             <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-10 lg:gap-20">
@@ -144,18 +158,23 @@ export default function Menu({ isBangla }) {
                     </div>
 
                     {/* Price & Action */}
-                    <div className="flex flex-col sm:flex-row items-center gap-8 lg:gap-12 w-full lg:w-auto">
-                        <h2 className="text-[#E31B23] text-4xl lg:text-6xl font-bold font-sans">
+                    <div className="flex flex-row items-center justify-center lg:justify-start gap-4 sm:gap-8 lg:gap-12 w-full lg:w-auto">
+                        
+                        {/* Price (এক লাইনে রাখার জন্য shrink-0 এবং whitespace-nowrap) */}
+                        <h2 className="text-[#E31B23] text-3xl sm:text-4xl lg:text-6xl font-bold font-sans whitespace-nowrap shrink-0">
                             Tk {currentItem?.priceBDT}
                         </h2>
 
+                        {/* Button (মোবাইল ও ডেস্কটপ সবখানে এক লাইনে থাকবে) */}
                         <button 
                             onClick={() => setSelectedProduct(currentItem)}
-                            className="group flex items-center justify-between gap-6 bg-[#E31B23] hover:bg-[#c9161e] text-white px-8 py-3.5 rounded-full transition-all duration-300 shadow-[0_10px_30px_rgba(227,27,35,0.3)] active:scale-95 w-full sm:w-auto"
+                            className="group flex flex-row items-center justify-between gap-3 sm:gap-6 bg-[#E31B23] hover:bg-[#c9161e] text-white px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-full transition-all duration-300 shadow-[0_10px_30px_rgba(227,27,35,0.3)] active:scale-95 shrink-0 whitespace-nowrap"
                         >
-                            <span className="font-bold tracking-widest uppercase text-sm lg:text-base">Add To Tray</span>
-                            <div className="bg-[#050505] p-2 rounded-full group-hover:rotate-90 transition-transform">
-                                <Plus size={20} className="text-white" />
+                            <span className="font-bold tracking-widest uppercase text-[11px] sm:text-sm lg:text-base">
+                                Add To Tray
+                            </span>
+                            <div className="bg-[#050505] p-1.5 sm:p-2 rounded-full group-hover:rotate-90 transition-transform">
+                                <Plus className="text-white w-4 h-4 sm:w-5 sm:h-5" />
                             </div>
                         </button>
                     </div>
@@ -230,7 +249,7 @@ export default function Menu({ isBangla }) {
                       <h2 className={`${anton.className} text-4xl text-white mb-2 uppercase tracking-tight`}>
                         {selectedProduct.name.split(" ")[0]} <span className="text-[#E31B23]">{selectedProduct.name.split(" ").slice(1).join(" ")}</span>
                       </h2>
-                      <h3 className="text-[#E31B23] text-2xl font-bold mb-6 font-sans">Tk {selectedProduct.priceBDT}</h3>
+                      <h3 className="text-[#E31B23] text-2xl font-bold mb-6 font-sans whitespace-nowrap">Tk {selectedProduct.priceBDT}</h3>
                       <p className="text-white/60 mb-10 text-lg leading-relaxed">{isBangla ? selectedProduct.descriptionBn : selectedProduct.description}</p>
                       <button onClick={() => setSelectedProduct(null)} className="w-full bg-[#E31B23] py-4 rounded-full font-bold uppercase tracking-widest hover:bg-[#b31219] transition-all">Confirm Add To Tray</button>
                   </motion.div>

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Globe, MoreVertical, X, ShoppingBag, LogOut, User } from "lucide-react"; 
 import Image from "next/image";
 import Link from "next/link"; 
@@ -9,18 +9,40 @@ import { Playfair_Display, Great_Vibes } from "next/font/google";
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"], style: ["italic"] });
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: ["400"] });
 
-export default function Navbar({ isBangla, setIsBangla, setShowAuthModal }) {
+export default function Navbar({ isBangla, setIsBangla }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     
-    // ⚠️ এটি একটি ফেক স্টেট। পরে যখন আসল লগিন করবে, তখন এই স্টেটটা Auth Context থেকে আসবে।
-    // ডেমো দেখার জন্য তুমি `false` কে `true` করে দেখতে পারো প্রোফাইল কেমন দেখায়।
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userData, setUserData] = useState(null);
 
-    // ডেমো লগিন ফাংশন
-    const handleMockLogin = () => {
-        setIsLoggedIn(true);
-        // setShowAuthModal(true); // আসল প্রজেক্টে মডাল ওপেন হবে
+    useEffect(() => {
+        const checkLoginStatus = () => {
+            const user = localStorage.getItem("user");
+            if (user) {
+                setIsLoggedIn(true);
+                setUserData(JSON.parse(user)); // রিয়েল ডাটা সেট করা হলো
+            } else {
+                setIsLoggedIn(false);
+                setUserData(null);
+            }
+        };
+
+        // শুরুতে একবার চেক করবে
+        checkLoginStatus();
+
+        // লগিন পেজ থেকে "userLoggedIn" ইভেন্ট ফায়ার হলে রিয়েল-টাইমে আপডেট হবে
+        window.addEventListener("userLoggedIn", checkLoginStatus);
+
+        return () => window.removeEventListener("userLoggedIn", checkLoginStatus);
+    }, []);
+
+    // লগআউট ফাংশন
+    const handleLogout = () => {
+        localStorage.removeItem("user"); // লোকাল স্টোরেজ থেকে ডাটা মুছে ফেলবে
+        setIsLoggedIn(false);
+        setUserData(null);
+        setShowProfileMenu(false);
     };
 
     return (
@@ -74,29 +96,30 @@ export default function Navbar({ isBangla, setIsBangla, setShowAuthModal }) {
                     </span>
                 </Link>
 
-                {/* --- Auth Section (Login / Profile Pic) --- */}
+                {/* --- Auth Section (Login / Profile Info) --- */}
                 {isLoggedIn ? (
                     <div className="relative">
                         <button 
                             onClick={() => setShowProfileMenu(!showProfileMenu)}
-                            className="relative h-10 w-10 rounded-full border-2 border-[#E31B23] overflow-hidden hover:shadow-[0_0_15px_rgba(227,27,35,0.4)] transition-all"
+                            className="relative h-10 w-10 flex items-center justify-center rounded-full border-2 border-[#E31B23] bg-[#0a0a0a] overflow-hidden hover:shadow-[0_0_15px_rgba(227,27,35,0.4)] transition-all"
                         >
-                            {/* ডেমো প্রোফাইল ছবি (Next.js config error এড়াতে সরাসরি img ট্যাগ) */}
-                            <img src="https://i.pravatar.cc/150?img=11" alt="Profile" className="w-full h-full object-cover" />
+                            {/* ডেমো ছবির বদলে ডিফল্ট ইউজার আইকন */}
+                            <User size={20} className="text-[#E31B23]" />
                         </button>
 
-                        {/* Profile Dropdown */}
+                        {/* Profile Dropdown (Real Data) */}
                         {showProfileMenu && (
                             <div className="absolute right-0 mt-3 w-48 bg-[#0a0a0a]/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl py-2 z-50">
                                 <div className="px-4 py-3 border-b border-white/10 mb-2">
-                                    <p className="text-sm text-white font-bold">Joyassroy Barua</p>
-                                    <p className="text-xs text-[#888888]">user@example.com</p>
+                                    <p className="text-sm text-white font-bold truncate">
+                                        {userData?.name || "User"}
+                                    </p>
+                                    <p className="text-xs text-[#888888] font-mono mt-1">
+                                        {userData?.phone || ""}
+                                    </p>
                                 </div>
                                 <button 
-                                    onClick={() => {
-                                        setIsLoggedIn(false);
-                                        setShowProfileMenu(false);
-                                    }}
+                                    onClick={handleLogout} // আসল লগআউট ফাংশন কল
                                     className="w-full flex items-center gap-3 px-4 py-2 text-white/80 hover:text-white hover:bg-[#E31B23]/20 transition-colors"
                                 >
                                     <LogOut size={16} className="text-[#E31B23]" /> 
@@ -106,12 +129,12 @@ export default function Navbar({ isBangla, setIsBangla, setShowAuthModal }) {
                         )}
                     </div>
                 ) : (
-                    <button
-                        onClick={handleMockLogin}
-                        className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#E31B23] to-[#b31219] text-white font-bold tracking-widest text-sm uppercase shadow-[0_0_15px_rgba(227,27,35,0.3)] hover:shadow-[0_0_25px_rgba(227,27,35,0.6)] hover:scale-105 transition-all"
+                    <Link
+                        href="/login"
+                        className="flex items-center justify-center px-6 py-2.5 rounded-full bg-gradient-to-r from-[#E31B23] to-[#b31219] text-white font-bold tracking-widest text-sm uppercase shadow-[0_0_15px_rgba(227,27,35,0.3)] hover:shadow-[0_0_25px_rgba(227,27,35,0.6)] hover:scale-105 transition-all"
                     >
                         {isBangla ? "লগিন" : "Login"}
-                    </button>
+                    </Link>
                 )}
             </div>
 
@@ -138,11 +161,16 @@ export default function Navbar({ isBangla, setIsBangla, setShowAuthModal }) {
             {isMenuOpen && (
                 <div className="absolute top-full left-0 w-full bg-[#050505]/95 backdrop-blur-2xl border-b border-[#E31B23]/20 flex flex-col items-center py-8 gap-6 md:hidden shadow-[0_20px_40px_rgba(0,0,0,0.8)] z-50">
                     
-                    {/* Mobile Profile Section */}
+                    {/* Mobile Profile Section (Real Data) */}
                     {isLoggedIn && (
                         <div className="flex flex-col items-center gap-3 mb-4 pb-6 border-b border-white/10 w-4/5">
-                            <img src="https://i.pravatar.cc/150?img=11" alt="Profile" className="w-16 h-16 rounded-full border-2 border-[#E31B23]" />
-                            <p className="text-white font-bold">Joyassroy Barua</p>
+                            <div className="w-16 h-16 rounded-full border-2 border-[#E31B23] bg-[#0a0a0a] flex items-center justify-center shadow-[0_0_15px_rgba(227,27,35,0.3)]">
+                                <User size={32} className="text-[#E31B23]" />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-white font-bold text-lg">{userData?.name || "User"}</p>
+                                <p className="text-[#a0a0a0] text-sm font-mono">{userData?.phone || ""}</p>
+                            </div>
                         </div>
                     )}
 
@@ -165,19 +193,20 @@ export default function Navbar({ isBangla, setIsBangla, setShowAuthModal }) {
                     {/* Mobile Auth Button */}
                     {isLoggedIn ? (
                          <button
-                         onClick={() => { setIsLoggedIn(false); setIsMenuOpen(false); }}
-                         className="flex items-center justify-center gap-2 px-10 py-3.5 mt-4 rounded-full border border-[#E31B23] text-[#E31B23] font-bold uppercase tracking-widest w-11/12 max-w-xs hover:bg-[#E31B23]/10"
+                         onClick={() => { handleLogout(); setIsMenuOpen(false); }} // আসল লগআউট ফাংশন
+                         className="flex items-center justify-center gap-2 px-10 py-3.5 mt-4 rounded-full border border-[#E31B23] text-[#E31B23] font-bold uppercase tracking-widest w-11/12 max-w-xs hover:bg-[#E31B23]/10 transition-colors"
                      >
                          <LogOut size={18} />
                          {isBangla ? "লগআউট" : "Logout"}
                      </button>
                     ) : (
-                        <button
-                            onClick={() => { handleMockLogin(); setIsMenuOpen(false); }}
-                            className="px-10 py-3.5 mt-4 rounded-full bg-gradient-to-r from-[#E31B23] to-[#b31219] font-bold tracking-widest uppercase text-white shadow-[0_0_20px_rgba(227,27,35,0.4)] w-11/12 max-w-xs"
+                        <Link
+                            href="/login"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="flex items-center justify-center px-10 py-3.5 mt-4 rounded-full bg-gradient-to-r from-[#E31B23] to-[#b31219] font-bold tracking-widest uppercase text-white shadow-[0_0_20px_rgba(227,27,35,0.4)] w-11/12 max-w-xs"
                         >
                             {isBangla ? "লগিন" : "Login"}
-                        </button>
+                        </Link>
                     )}
                 </div>
             )}
