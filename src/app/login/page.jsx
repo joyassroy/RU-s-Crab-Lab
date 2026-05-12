@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Phone, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // রিডাইরেক্টের জন্য ইম্পোর্ট
+import { useRouter } from "next/navigation"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { Playfair_Display, Anton } from "next/font/google";
 
@@ -10,7 +10,7 @@ const playfair = Playfair_Display({ subsets: ["latin"], weight: ["700"], style: 
 const anton = Anton({ subsets: ["latin"], weight: ["400"] });
 
 export default function LoginPage() {
-  const router = useRouter(); // রাউটার ইনিশিয়ালাইজ
+  const router = useRouter(); 
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [userRole, setUserRole] = useState("customer"); // 🔴 ইউজারের রোল সেভ করার জন্য স্টেট
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -40,17 +41,23 @@ export default function LoginPage() {
       
       setSuccess(true);
       
-      // ✅ লগিন সাকসেস হলে ইউজারের ডাটা localStorage এ সেভ করে রাখছি
-      // যাতে Navbar বুঝতে পারে যে ইউজার লগিন করা আছে
+      // ডাটাবেস থেকে পাওয়া রোল স্টেটে সেভ করছি
+      const role = data.user?.role || "customer";
+      setUserRole(role);
+      
+      // ইউজারের ডাটা localStorage এ সেভ করে রাখছি
       if (typeof window !== "undefined") {
         localStorage.setItem("user", JSON.stringify(data.user));
-        // একটি কাস্টম ইভেন্ট ফায়ার করছি যাতে Navbar সাথে সাথে আপডেট হয় (পেজ রিলোড ছাড়াই)
         window.dispatchEvent(new Event("userLoggedIn"));
       }
 
-      // ✅ ২ সেকেন্ড পর /menu পেজে রিডাইরেক্ট
+      // 🔴 Role অনুযায়ী রিডাইরেক্ট লজিক
       setTimeout(() => {
-        router.push('/menu');
+        if (role === "chef" || role === "admin") {
+          router.push('/dashboard'); // শেফ বা অ্যাডমিন হলে ড্যাশবোর্ডে যাবে
+        } else {
+          router.push('/menu'); // কাস্টমার হলে মেনুতে যাবে
+        }
       }, 2000); 
 
     } catch (err) {
@@ -210,7 +217,10 @@ export default function LoginPage() {
             </div>
             <div>
               <h4 className={`${anton.className} text-white text-2xl tracking-wider uppercase`}>Access Granted</h4>
-              <p className="text-[#a0a0a0] text-sm font-medium">Entering the menu...</p>
+              {/* 🔴 রোল অনুযায়ী টেক্সট পরিবর্তন */}
+              <p className="text-[#a0a0a0] text-sm font-medium">
+                {userRole === "chef" || userRole === "admin" ? "Entering the kitchen..." : "Entering the menu..."}
+              </p>
             </div>
           </motion.div>
         )}

@@ -14,6 +14,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'i.postimg.cc', // এই নতুন ডোমেইনটি যোগ করা হলো
       },
+      {
+        protocol: 'https',
+        hostname:'i.pravatar.cc',
+      }
     ],
   },
 };
