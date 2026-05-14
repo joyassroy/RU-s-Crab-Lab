@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
-import User from "@/models/User"; // তোমার User মডেল থাকতে হবে
+import User from "@/models/User";
 
 export async function POST(req) {
   try {
@@ -30,7 +30,12 @@ export async function POST(req) {
     return NextResponse.json({ 
       success: true, 
       message: "Login successful",
-      user: { id: existingUser._id, name: existingUser.name, phone: existingUser.phone }
+      user: { 
+        id: existingUser._id, 
+        name: existingUser.name, 
+        phone: existingUser.phone,
+        role: existingUser.role || "customer" // 🔴 এই ম্যাজিক লাইনটা অ্যাড করা হলো!
+      }
     }, { status: 200 });
 
   } catch (error) {

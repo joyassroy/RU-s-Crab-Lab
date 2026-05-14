@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Clock, Flame, Package, ChevronRight, Loader2, Utensils, CheckCheck } from "lucide-react";
+import { CheckCircle2, Clock, Flame, Package, ChevronRight, Loader2, Utensils, CheckCheck, X, AlertCircle } from "lucide-react"; // 🔴 AlertCircle ইম্পোর্ট করা হলো
 import { ChefContext } from "../layout"; 
 
 const workflow = ["pending", "preparing", "cooking", "ready", "served"];
@@ -13,14 +13,16 @@ export default function ChefDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
   const [successToast, setSuccessToast] = useState(null);
+  
+  // 🔴 Cancel Confirmation Modal এর জন্য নতুন স্টেট
+  const [cancelConfirmId, setCancelConfirmId] = useState(null);
 
   const fetchOrders = async () => {
     try {
       const res = await fetch("/api/orders"); 
       if (res.ok) {
         const data = await res.json();
-        // Served হয়ে গেলে আর লাইভ প্যানেলে দেখাবে না
-        const activeOrders = data.filter(o => o.status !== "served");
+        const activeOrders = data.filter(o => o.status !== "served" && o.status !== "cancelled");
         setOrders(activeOrders);
       }
     } catch (error) {
@@ -52,7 +54,6 @@ export default function ChefDashboardPage() {
 
       if (res.ok) {
         if (nextStatus === "served") {
-          // Served হলে লিস্ট থেকে সরিয়ে দিব এবং স্পেশাল টোস্ট দেখাবো
           setOrders(prev => prev.filter(o => o._id !== orderId));
           setSuccessToast(isBangla ? "অর্ডার ডেলিভারড এবং ডাটা সেভ হয়েছে!" : "Order Delivered & Analytics Updated!");
         } else {
@@ -71,7 +72,33 @@ export default function ChefDashboardPage() {
     }
   };
 
-  // --- Interactive Stepper Component ---
+  // --- 🔴 Custom Cancel Logic ---
+  const confirmCancelOrder = async () => {
+    if (!cancelConfirmId) return;
+    
+    const orderId = cancelConfirmId;
+    setUpdatingId(orderId);
+    setCancelConfirmId(null); // পপআপ সাথে সাথে বন্ধ করে দিবে
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, status: "cancelled" })
+      });
+
+      if (res.ok) {
+        setOrders(prev => prev.filter(o => o._id !== orderId));
+        setSuccessToast(isBangla ? "অর্ডারটি বাতিল করা হয়েছে!" : "Order has been cancelled!");
+        setTimeout(() => setSuccessToast(null), 4000);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const OrderStepper = ({ currentStatus }) => {
     const steps = [
       { id: "pending", icon: Clock, label: "Pending" },
@@ -112,7 +139,7 @@ export default function ChefDashboardPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto relative">
       {loading ? (
         <div className="h-[70vh] flex items-center justify-center">
           <Loader2 className="animate-spin text-[#E31B23]" size={40} />
@@ -136,7 +163,6 @@ export default function ChefDashboardPage() {
                 className="bg-white rounded-[24px] md:rounded-[32px] p-6 border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(227,27,35,0.06)] transition-all flex flex-col xl:flex-row xl:items-center gap-8"
               >
                 
-                {/* 1. Customer & Order Info (Left) */}
                 <div className="xl:w-1/4 flex flex-col shrink-0 border-b xl:border-b-0 xl:border-r border-gray-100 pb-6 xl:pb-0 xl:pr-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-2 h-2 rounded-full bg-[#E31B23] animate-pulse"></span>
@@ -152,7 +178,6 @@ export default function ChefDashboardPage() {
                   </div>
                 </div>
 
-                {/* 2. Order Items (Middle) */}
                 <div className="xl:w-2/4 flex-1">
                   <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-4">Ordered Items</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -167,36 +192,44 @@ export default function ChefDashboardPage() {
                   </div>
                 </div>
 
-                {/* 3. Workflow & Action (Right) */}
                 <div className="xl:w-1/4 flex flex-col shrink-0 gap-8 justify-center pt-4 xl:pt-0 border-t xl:border-t-0 border-gray-100">
-                  
                   <OrderStepper currentStatus={order.status} />
 
-                  <button 
-                    onClick={() => handleUpdateStatus(order._id, order.status)}
-                    disabled={updatingId === order._id}
-                    className={`w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg
-                      ${order.status === "ready" 
-                        ? "bg-green-500 hover:bg-green-600 text-white shadow-green-500/30" 
-                        : "bg-gray-900 hover:bg-[#E31B23] text-white shadow-gray-900/20 hover:shadow-[#E31B23]/30"
-                      }
-                    `}
-                  >
-                    {updatingId === order._id ? <Loader2 className="animate-spin" size={20} /> : (
-                      <>
-                        {order.status === "pending" && (isBangla ? "প্রস্তুতি শুরু করুন" : "Start Preparing")}
-                        {order.status === "preparing" && (isBangla ? "রান্না শুরু করুন" : "Start Cooking")}
-                        {order.status === "cooking" && (isBangla ? "সার্ভ করার জন্য প্রস্তুত" : "Mark as Ready")}
-                        {order.status === "ready" && (
-                          <>
-                            <CheckCheck size={20} />
-                            {isBangla ? "ডেলিভারি সম্পন্ন" : "Mark as Delivered"}
-                          </>
-                        )}
-                        {order.status !== "ready" && <ChevronRight size={20} />}
-                      </>
-                    )}
-                  </button>
+                  <div className="flex flex-col gap-3 w-full">
+                    <button 
+                      onClick={() => handleUpdateStatus(order._id, order.status)}
+                      disabled={updatingId === order._id}
+                      className={`w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg
+                        ${order.status === "ready" 
+                          ? "bg-green-500 hover:bg-green-600 text-white shadow-green-500/30" 
+                          : "bg-gray-900 hover:bg-[#E31B23] text-white shadow-gray-900/20 hover:shadow-[#E31B23]/30"
+                        }
+                      `}
+                    >
+                      {updatingId === order._id ? <Loader2 className="animate-spin" size={20} /> : (
+                        <>
+                          {order.status === "pending" && (isBangla ? "প্রস্তুতি শুরু করুন" : "Start Preparing")}
+                          {order.status === "preparing" && (isBangla ? "রান্না শুরু করুন" : "Start Cooking")}
+                          {order.status === "cooking" && (isBangla ? "সার্ভ করার জন্য প্রস্তুত" : "Mark as Ready")}
+                          {order.status === "ready" && (
+                            <>
+                              <CheckCheck size={20} />
+                              {isBangla ? "ডেলিভারি সম্পন্ন" : "Mark as Delivered"}
+                            </>
+                          )}
+                          {order.status !== "ready" && <ChevronRight size={20} />}
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => setCancelConfirmId(order._id)} // 🔴 অ্যালার্টের বদলে স্টেট আপডেট
+                      disabled={updatingId === order._id}
+                      className="text-red-400 hover:text-[#E31B23] text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5 py-1"
+                    >
+                      <X size={14} /> {isBangla ? "অর্ডার বাতিল করুন" : "Cancel Order"}
+                    </button>
+                  </div>
                 </div>
 
               </motion.div>
@@ -204,6 +237,46 @@ export default function ChefDashboardPage() {
           </AnimatePresence>
         </div>
       )}
+
+      {/* --- 🔴 Custom Cancel Confirmation Modal --- */}
+      <AnimatePresence>
+        {cancelConfirmId && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }} 
+              className="bg-white border border-gray-100 p-8 rounded-[32px] max-w-sm w-full text-center shadow-[0_20px_60px_rgba(0,0,0,0.1)]"
+            >
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle className="text-[#E31B23]" size={32} />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2 uppercase tracking-tight">
+                {isBangla ? "অর্ডার বাতিল করবেন?" : "Cancel this order?"}
+              </h2>
+              <p className="text-gray-500 mb-8 text-sm leading-relaxed">
+                {isBangla 
+                  ? "আপনি কি নিশ্চিত? বাতিল করা অর্ডার আর ফিরে পাওয়া যাবে না।" 
+                  : "Are you sure? This action cannot be undone."}
+              </p>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setCancelConfirmId(null)} 
+                  className="flex-1 py-3.5 rounded-xl border border-gray-200 font-bold uppercase tracking-widest text-xs text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  {isBangla ? "না" : "No, Keep"}
+                </button>
+                <button 
+                  onClick={confirmCancelOrder} 
+                  className="flex-1 py-3.5 rounded-xl bg-[#E31B23] font-bold uppercase tracking-widest text-xs text-white hover:bg-[#c9161e] shadow-lg shadow-[#E31B23]/20 transition-all"
+                >
+                  {isBangla ? "হ্যাঁ, বাতিল করুন" : "Yes, Cancel"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* --- Premium Toast --- */}
       <AnimatePresence>
@@ -217,7 +290,6 @@ export default function ChefDashboardPage() {
             </div>
             <div>
               <h4 className="text-gray-900 font-bold text-sm">{successToast}</h4>
-              <p className="text-gray-400 text-xs mt-0.5">Admin dashboard data updated.</p>
             </div>
           </motion.div>
         )}

@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, ArrowLeft, Search, Calendar } from "lucide-react";
+import { Loader2, ArrowLeft, Search, Calendar, CheckCircle2, XCircle } from "lucide-react"; // 🔴 আইকন অ্যাড করা হলো
 import { Anton, Inter } from "next/font/google";
-import Navbar from "@/components/Navbar"; // কাস্টম ন্যাভবার থাকলে ইউজ করো
+import Navbar from "@/components/Navbar"; 
 import HistoryItem from "@/components/HistoryItem";
 
 const anton = Anton({ subsets: ["latin"], weight: ["400"] });
@@ -43,11 +43,17 @@ export default function OrderHistoryPage() {
       try {
         const res = await fetch("/api/orders");
         const data = await res.json();
-        // শুধু 'ready' বা 'served' স্ট্যাটাসের অর্ডারগুলো হিস্ট্রিতে দেখাবো
-        const historyData = data.filter(o => o.status === "ready" || o.status === "served");
+        
+        const historyData = data.filter(
+          o => o.status === "ready" || o.status === "served" || o.status === "cancelled"
+        );
+        
         setOrders(historyData);
-      } catch (error) { console.error(error); }
-      finally { setLoading(false); }
+      } catch (error) { 
+        console.error(error); 
+      } finally { 
+        setLoading(false); 
+      }
     };
     fetchHistory();
   }, [isAuthorized]);
@@ -56,6 +62,10 @@ export default function OrderHistoryPage() {
     order.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order._id.includes(searchTerm)
   );
+
+  // 🔴 অর্ডারগুলোকে ২ ভাগে ভাগ করা হচ্ছে
+  const completedOrders = filteredOrders.filter(o => o.status === "ready" || o.status === "served");
+  const cancelledOrders = filteredOrders.filter(o => o.status === "cancelled");
 
   if (!isAuthorized || loading) {
     return (
@@ -97,23 +107,63 @@ export default function OrderHistoryPage() {
         {filteredOrders.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
              <Calendar size={48} className="mx-auto text-gray-200 mb-4" />
-             <p className="text-gray-400">No completed orders found in the history.</p>
+             <p className="text-gray-400">No completed or cancelled orders found in the history.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {/* Table Header (Desktop Only) */}
-            <div className="hidden md:grid grid-cols-5 px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-              <span>Order Info</span>
-              <span>Customer</span>
-              <span>Items</span>
-              <span>Total Amount</span>
-              <span className="text-right">Completion Date</span>
-            </div>
+          <div className="flex flex-col gap-12">
+            
+            {/* 🟢 COMPLETED ORDERS SECTION */}
+            {completedOrders.length > 0 && (
+              <div>
+                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-gray-500 mb-6 flex items-center gap-2">
+                  <CheckCircle2 size={18} className="text-green-500" /> 
+                  Successful Orders
+                </h2>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  {/* Table Header */}
+                  <div className="hidden md:grid grid-cols-5 px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-200">
+                    <span>Order Info</span>
+                    <span>Customer</span>
+                    <span>Items</span>
+                    <span>Total Amount</span>
+                    <span className="text-right">Completion Date</span>
+                  </div>
 
-            {/* List of Orders */}
-            {filteredOrders.map((order) => (
-              <HistoryItem key={order._id} order={order} />
-            ))}
+                  {completedOrders.map((order) => (
+                    <HistoryItem key={order._id} order={order} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 🔴 CANCELLED ORDERS SECTION */}
+            {cancelledOrders.length > 0 && (
+              <div>
+                <div className="flex items-center gap-4 mb-6">
+                  <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-red-500 flex items-center gap-2">
+                    <XCircle size={18} /> 
+                    Cancelled Orders
+                  </h2>
+                  <div className="flex-1 h-[1px] bg-red-100"></div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="hidden md:grid grid-cols-5 px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-red-300 border-b border-red-100">
+                    <span>Order Info</span>
+                    <span>Customer</span>
+                    <span>Items</span>
+                    <span>Total Amount</span>
+                    <span className="text-right">Cancellation Date</span>
+                  </div>
+
+                  {cancelledOrders.map((order) => (
+                    <HistoryItem key={order._id} order={order} />
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
         )}
       </div>

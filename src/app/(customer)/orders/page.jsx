@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Loader2, Package, Clock, Flame, CheckCircle, CheckCheck, ShoppingBag } from "lucide-react";
+import { Loader2, Package, Clock, Flame, CheckCircle, CheckCheck, ShoppingBag, XCircle } from "lucide-react"; // 🔴 XCircle ইম্পোর্ট করা হলো
 import { motion, AnimatePresence } from "framer-motion";
 import { Anton, Playfair_Display } from "next/font/google";
 import Navbar from "@/components/Navbar";
@@ -37,7 +37,6 @@ export default function MyOrdersPage() {
     // --- রিয়েল-টাইম আপডেট (Polling) ---
     useEffect(() => {
         fetchOrders();
-        // প্রতি ৫ সেকেন্ডে ব্যাকগ্রাউন্ডে অর্ডার ফেচ হবে যাতে প্রগ্রেস বার অটো আপডেট হয়
         const interval = setInterval(fetchOrders, 5000);
         return () => clearInterval(interval);
     }, []);
@@ -51,9 +50,10 @@ export default function MyOrdersPage() {
         return 0;
     };
 
-    // অর্ডারগুলোকে ২ ভাগে ভাগ করা হচ্ছে: লাইভ এবং কমপ্লিট
-    const activeOrders = orders.filter(o => o.status !== "served");
+    // 🔴 অর্ডারগুলোকে ৩ ভাগে ভাগ করা হচ্ছে: লাইভ, কমপ্লিট এবং ক্যানসেলড
+    const activeOrders = orders.filter(o => o.status !== "served" && o.status !== "cancelled");
     const completedOrders = orders.filter(o => o.status === "served");
+    const cancelledOrders = orders.filter(o => o.status === "cancelled");
 
     if (loading) return (
         <div className="min-h-screen bg-[#030303] flex items-center justify-center">
@@ -193,6 +193,60 @@ export default function MyOrdersPage() {
                                                     ))}
                                                     {order.items.length > 3 && (
                                                         <span className="text-xs text-[#E31B23] font-bold py-1">+{order.items.length - 3} more</span>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- 🚫 CANCELLED ORDERS SECTION --- */}
+                        {cancelledOrders.length > 0 && (
+                            <div className="space-y-6">
+                                <h2 className="text-sm uppercase font-bold tracking-[0.3em] text-red-500/50 flex items-center gap-3 pt-6 border-t border-white/5">
+                                    <XCircle size={16} />
+                                    Cancelled Orders
+                                </h2>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <AnimatePresence>
+                                        {cancelledOrders.map((order) => (
+                                            <motion.div 
+                                                layout
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                key={order._id} 
+                                                className="bg-[#050505] border border-red-500/10 p-6 rounded-[24px] opacity-70 hover:opacity-100 transition-opacity relative overflow-hidden"
+                                            >
+                                                {/* Red tinted background for cancelled items */}
+                                                <div className="absolute inset-0 bg-red-500/5 pointer-events-none"></div>
+
+                                                <div className="flex justify-between items-center mb-6 relative z-10">
+                                                    <div>
+                                                        <p className="text-white/30 text-[10px] uppercase tracking-widest mb-1">Order #{order._id.slice(-6).toUpperCase()}</p>
+                                                        <p className="text-white/60 font-medium text-sm">
+                                                            {new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] uppercase font-bold tracking-widest rounded-full flex items-center gap-1">
+                                                            <XCircle size={12} /> Cancelled
+                                                        </span>
+                                                        {/* Line-through price to show it's invalid */}
+                                                        <p className="text-white/40 line-through font-bold mt-2">Tk {order.totalAmount}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-2 relative z-10">
+                                                    {order.items.slice(0, 3).map((item, i) => (
+                                                        <span key={i} className="text-xs text-white/40 bg-white/5 px-2 py-1 rounded-md">
+                                                            {item.quantity}x {item.name}
+                                                        </span>
+                                                    ))}
+                                                    {order.items.length > 3 && (
+                                                        <span className="text-xs text-red-500/50 font-bold py-1">+{order.items.length - 3} more</span>
                                                     )}
                                                 </div>
                                             </motion.div>

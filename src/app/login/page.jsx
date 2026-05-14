@@ -38,6 +38,8 @@ export default function LoginPage() {
       if (!res.ok) {
         throw new Error(data.message || "Login failed");
       }
+      console.log("Full API Response:", data);
+      console.log("User Role is:", data.user?.role);
       
       setSuccess(true);
       
